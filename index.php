@@ -5,42 +5,8 @@
 	include('function.php');
     include('connect.php');
     include('lib/simple_html_dom.php');
-    //$curl = new cURL();
-    //$html = $curl->get('http://vnexpress.net/tin-tuc/the-gioi');
 
-    /*$result = array();
-
-    if(preg_match('#<h2>Mở thưởng (.*?) ngày (.*?)</h2>#',$html,$match)) {
-        $result['w'] = $match[1];
-        $result['day'] = $match[2];
-
-    }
-
-    if(preg_match('#<td class="bor f2 db" colspan="12">(.*?)</td>#',$html,$match))
-    {
-        $result['db'] = $match[1];
-    }
-    if(preg_match('#<td class="bor f2" colspan="12">(.*?)</td>#',$html,$match))
-    {
-        $result['giainhat'] = $match[1];
-    }
-
-    if(preg_match('#<td class="span-2 bol f1b"><h3>Giải Nhì</h3></td>' ."\n" . '<td class="bol f2" colspan="6">(.*?)</td>' ."\n" . '<td class="bor f2" colspan="6">(.*?)</td>#',$html,$match))
-    {
-        $result['giainhi1'] = $match[1];
-    }*/
-
-    /*if(preg_match('#<td class="bol f2" colspan="6">(.*?)</td>#',$html,$match))
-    {
-        $result['giainhi1'] = $match[1];
-    }
-
-    if(preg_match('#<td class="bor f2" colspan="6">(.*?)</td>#',$html,$match))
-    {
-        $result['giainhi2'] = $match[1];
-    }*/
-
-    $html = file_get_html('http://vnexpress.net/tin-tuc/the-gioi');
+    $html = file_get_html('http://vnexpress.net/tin-tuc/thoi-su');
     
     /*Lay tin top 1 category */
     $titleTop = $html->find('h1.title_news a.txt_link');
@@ -54,7 +20,8 @@
     $textTop = "";
     foreach($titleTop as $item) {
 	    $strInsertTitleTop = $item->innertext;
-        $alias = changeTitle($strInsertTitleTop);
+        $alias = strip_tags(changeTitle($strInsertTitleTop));
+        $alias = str_replace("&nbsp;", "", $alias);
         $strLinkTop = $item->href;
         $htmlTop = file_get_html($strLinkTop);
         $contentTop = $htmlTop->find('div.fck_detail');
@@ -84,11 +51,61 @@
     $descriptionTop = $headersTop["description"];
     //$textTop = "123414";
     //echo $strInsertTitleTop."----".$strInsertIntroTop."----".$strLinkTop."----".$alias."---".$headers["keywords"]."---".$headers["description"];
-    /*----------------------*/
     $strInsertTop = "INSERT INTO posts (`name`,`alias`,`intro`,`content`,`image`,`keyword`,`description`,`user_id`,`cate_id`,`created_at`,`updated_at`) VALUES('".$strInsertTitleTop."','".$alias."','".$strInsertIntroTop."','".$textTop."','".$strInsertImageTop."','".$keywordTop."','".$descriptionTop."','".$user_id."','".$cate_id."','".$created_at."','".$created_at."' )";
-    echo $strInsertTop;
-    mysqli_query($con,$strInsertTop);
+    //echo $strInsertTop;
+    //mysqli_query($con,$strInsertTop);
 
 
+
+    /*----------------------*/
+
+    $arrTitles = $arrIntros = $arrAlias = $arrLinks = $arrPosts =  array();
+    $objTitle = $html->find('li .block_image_news h3.title_news a.txt_link');
+    foreach ($objTitle as $item) {
+        if(strpos($item->href, 'http://vnexpress.net/photo/') !== false || strpos($item->href, 'http://vnexpress.net/interactive/') !== false || strpos($item->href, 'http://video.vnexpress.net/') !== false)
+        {
+            echo $item->href;
+        }
+        else 
+        {
+            array_push($arrTitles, strip_tags($item->innertext));
+            array_push($arrAlias, strip_tags(changeTitle($item->innertext)));
+            array_push($arrLinks, $item->href);
+            $htmlPosts =  file_get_html($item->href);
+            $objPosts = $htmlPosts->find('div.fck_detail');
+            foreach ($objPosts as $it) {
+                array_push($arrPosts, $it->innertext);
+            }
+        }
+        //echo strip_tags($item->innertext)."<br />";
+        //$item->innertext = trim($item->innertext);
+        
+
+    }
+
+    $objIntro = $html->find('li div.block_image_news div.news_lead');
+    foreach ($objIntro as $item) {
+        array_push($arrIntros, $item->innertext);
+        //echo $item->innertext;
+    }
+
+    
+    
+    for($i = 0; $i < count($arrAlias); $i++) {
+        $arrAlias[$i] = rtrim($arrAlias[$i],'-');
+        
+    }
+    echo "<pre>";
+    print_r($arrLinks);
+    echo "</pre>";
+   
+    echo "<pre>";
+    print_r($arrTitles);
+    echo "</pre>";
+
+    echo "<pre>";
+    print_r($arrAlias);
+    echo "</pre>";
 ?>
+
 
